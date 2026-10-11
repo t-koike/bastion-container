@@ -1,6 +1,6 @@
 # bastion-container
 
-A Dockerfile to create an SSH server for Internet open.
+A Containerfile to create an SSH server for Internet open.
 
 ## Requirement
 
