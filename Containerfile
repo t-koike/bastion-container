@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:26.04
 LABEL maintainer="t-koike"
 
 ENV LC_ALL=C.UTF-8 \
