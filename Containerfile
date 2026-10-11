@@ -1,35 +1,39 @@
 FROM ubuntu:18.04
-LABEL  maintainer "t-koike"
+LABEL maintainer="t-koike"
 
-RUN apt-get update && apt-get install -y openssh-server sudo libpam-google-authenticator
-RUN mkdir /var/run/sshd
+ENV LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
 
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssh-server sudo libpam-google-authenticator \
+ && rm -rf /var/lib/apt/lists/* \
+ && mkdir -p /var/run/sshd
 
-RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+# sshd: 初期状態はパスワード認証を無効化
+RUN sed -i \
+      -e 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' \
+      -e 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' \
+      /etc/ssh/sshd_config \
+ && echo "export VISIBLE=now" >> /etc/profile
 
-ENV NOTVISIBLE "in users profile"
-RUN echo "export VISIBLE=now" >> /etc/profile
+# PAM: common-auth を Google Authenticator に置き換え
+RUN sed -i \
+      -e '/^@include common-auth$/a auth    required    pam_google_authenticator.so' \
+      -e 's/^@include common-auth$/#@include common-auth/' \
+      /etc/pam.d/sshd
 
 COPY sshd_config /root/sshd_config
-COPY id_rsa.pub /root/authorized_keys
 COPY google-authenticator.sh /etc/profile.d/google-authenticator.sh
-
-RUN sudo sed -i -e "/^@include common-auth$/a auth    required    pam_google_authenticator.so" /etc/pam.d/sshd
-RUN sudo sed -i -e "s/^@include common-auth$/#@include common-auth/" /etc/pam.d/sshd
+COPY id_rsa.pub /tmp/authorized_keys
 
 RUN useradd -m -d /home/login.user -s /bin/bash login.user \
  && echo "login.user:test_pass" | chpasswd \
- && mkdir /home/login.user/.ssh \
- && chmod 700 /home/login.user/.ssh \
- && cp /root/authorized_keys /home/login.user/.ssh \
- && chmod 600 /home/login.user/.ssh/authorized_keys \
- && chown -R login.user:login.user /home/login.user/.ssh
-
-RUN echo "login.user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+ && install -d -m 700 -o login.user -g login.user /home/login.user/.ssh \
+ && install -m 600 -o login.user -g login.user /tmp/authorized_keys /home/login.user/.ssh/authorized_keys \
+ && rm /tmp/authorized_keys \
+ && echo "login.user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/login.user \
+ && chmod 440 /etc/sudoers.d/login.user
 
 EXPOSE 22
 
-CMD /usr/sbin/sshd -D
+CMD ["/usr/sbin/sshd", "-D"]
