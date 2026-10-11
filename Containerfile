@@ -11,7 +11,7 @@ RUN apt-get update \
 
 # sshd: 初期状態はパスワード認証を無効化
 RUN sed -i \
-      -e 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' \
+      -e 's/^#\?PermitRootLogin .*/PermitRootLogin no/' \
       -e 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' \
       /etc/ssh/sshd_config \
  && echo "export VISIBLE=now" >> /etc/profile
@@ -24,14 +24,15 @@ RUN sed -i \
 
 COPY sshd_config /root/sshd_config
 COPY google-authenticator.sh /etc/profile.d/google-authenticator.sh
+COPY enable-mfa.sh /usr/local/sbin/enable-mfa
 COPY id_rsa.pub /tmp/authorized_keys
 
 RUN useradd -m -d /home/login.user -s /bin/bash login.user \
- && echo "login.user:test_pass" | chpasswd \
  && install -d -m 700 -o login.user -g login.user /home/login.user/.ssh \
  && install -m 600 -o login.user -g login.user /tmp/authorized_keys /home/login.user/.ssh/authorized_keys \
  && rm /tmp/authorized_keys \
- && echo "login.user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/login.user \
+ && chmod 755 /usr/local/sbin/enable-mfa \
+ && echo "login.user ALL=(root) NOPASSWD: /usr/local/sbin/enable-mfa" > /etc/sudoers.d/login.user \
  && chmod 440 /etc/sudoers.d/login.user
 
 EXPOSE 22

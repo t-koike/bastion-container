@@ -6,10 +6,10 @@ HostKey /etc/ssh/ssh_host_ecdsa_key
 SyslogFacility AUTH
 LogLevel INFO
 LoginGraceTime 120
-PermitRootLogin yes
+PermitRootLogin no
 StrictModes yes
 PubkeyAuthentication yes
-PasswordAuthentication yes
+PasswordAuthentication no
 HostbasedAuthentication no
 PermitEmptyPasswords no
 ChallengeResponseAuthentication yes
