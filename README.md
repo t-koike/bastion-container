@@ -1,4 +1,4 @@
-# bastion-docker
+# bastion-container
 
 A Dockerfile to create an SSH server for Internet open.
 
