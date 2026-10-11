@@ -4,7 +4,7 @@ A Containerfile to create an SSH server for Internet open.
 
 ## Requirement
 
-Host server is assumed to be Ubuntu 26.04(Resolute Raccoon).
+Host server is assumed to be Ubuntu 26.04(Resolute).
 
 ## Usage
 ### Install Docker
